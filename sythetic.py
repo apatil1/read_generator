@@ -2,10 +2,10 @@
 import random
 import itertools
 import os
-from cStringIO import StringIO
+from cStringIO import StringIO #? where do you use it?
 import argparse
 
-def parse_stdin_args():
+def parse_stdin_args(): # this function is not used
     """This function reads the input
     arguments passed through standard in"""
     #Initialize parser
@@ -23,7 +23,7 @@ def parse_stdin_args():
 
 
 
-def parse_fasta(f, trim_desc=False):
+def parse_fasta(f, trim_desc=False): # BioPython can do it for free
     """Parse a FASTA format file.
 
     Parameters
@@ -78,6 +78,7 @@ def load_fasta(filepath, trim_desc=True):
     """
     with open(filepath) as f:
         seqs = parse_fasta(f, trim_desc=trim_desc)
+        # you used generators but in the next line convert it to dictionary  - that get rid of generators
         return dict(seqs)
 
 
@@ -92,6 +93,7 @@ def parse_greengenes_accessions(f):
 
 
 def get_chromosome_length(genome):
+    # doc string is missing here
     
     #Function to get chromosome list and the size and returnds a dictionary of chromosome as keys and size as values
     chr_list = {}
@@ -108,7 +110,9 @@ def get_random_sequence(genome):
     chr_list = get_chromosome_length(genome)
     
     random_seq = {}
+    # soorry at being pedantic but there is a space after comma
     chr = random.sample(chr_list.keys(),1)  #select chromosome
+    #dont hard-code the values here
     slen = random.randint(300,1000) #select sequence length
     spos = random.randint(1,chr_list[chr[0]] - slen)    #select start position
    
@@ -118,7 +122,7 @@ def get_random_sequence(genome):
 
     return seq
    
-def get_fragment(genome, chr, slen, spos):
+def get_fragment(genome, chr, slen, spos): # chr ? 
     
     #Function to extract sequence from genome using chromosome, length of sequence and start position
     return genome[chr][spos:spos+slen]
@@ -126,8 +130,10 @@ def get_fragment(genome, chr, slen, spos):
 
 def make_paired_end_reads(sequence):
     
+    # here we have an assumtion that all reads are 250...
+    
     #Function to make paired end reads by taking 250 bases from start and nd of the selected sequence and taking a reverse complement of one of the sequence at random
-    R1 = sequence[0:250]
+    R1 = sequence[0:250]  # 250 should not be hard-coded
     R2 = sequence[len(sequence) - 250:len(sequence)]
 
     if random.randint(0,1):
@@ -139,7 +145,7 @@ def make_paired_end_reads(sequence):
 
 
 
-def make_reverse_complement(seq):
+def make_reverse_complement(seq):  # BioPyhton has API to write FASTQ
     
     #Function to make reverse complement of a sequence
     comp ={"A":"T","T":"A","G":"C","C":"G","a":"t","t":"a","g":"c","c":"g", "N":"N"}
@@ -151,7 +157,7 @@ def make_reverse_complement(seq):
     return rev[::-1]
 
 
-def make_fastq(pair, filename):
+def make_fastq(pair, filename):  # BioPyhton has API to write FASTQ
     #Function to write sequence in FASTQ files for both reads
     fname = filename + "-R1.fastq"
     r1 = open(fname,"w")
@@ -180,8 +186,8 @@ def make_synthetic_genome(human, phix, bacteria, size, dir):
     
     #Function to make synthetic genomes from human, phix, bacteria and viruses.
     
-    # generate human reads
-    get_human_reads(human, size, dir)
+    # generate human reads    # this comment is redundant
+    get_human_reads(human, size, dir) 
     
     # generate phix reads
     get_phix_reads(phix, size, dir)
@@ -219,7 +225,7 @@ def get_phix_reads(percent, size, dir):
 def get_bacteria_reads(percent, size, dir):
  
     #Function to get random bacteria reads
-    bac_select = random.sample(os.listdir("genomes/bacteria/all.fna"), 1)
+    bac_select = random.sample(os.listdir("genomes/bacteria/all.fna"), 1) # dont hard-code the path have it as an argument
     gen = random.sample(os.listdir("genomes/bacteria/all.fna/" + bac_select[0]), 1)
     path = "genomes/bacteria/all.fna/" + bac_select[0] + "/" + gen[0]
 
@@ -258,12 +264,12 @@ def make_readme(human, phix, bacteria, size, dir):
 
 
 def main(argv):
-    args = parse_stdin_args()
+    args = parse_stdin_args() # this function is not used
     
     human = [0.5, 0.1, 0.01, 0.001]
     phix = [0.01, 0.001]
     bacteria = [0.4, 0.25, 0.1, 0.5]
-    list = permutate_genome_percent(human, phix, bacteria)
+    list = permutate_genome_percent(human, phix, bacteria) # please dont use list as aname of variable
 
     main_dir = "//"
     for i in range(0,len(list)):
@@ -272,8 +278,8 @@ def main(argv):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
-        make_synthetic_genome(list[i][0], list[i][1], list[i][2], 100, dir)
-        make_readme(list[i][0], list[i][1], list[i][2], 100, dir)
+        make_synthetic_genome(list[i][0], list[i][1], list[i][2], 100, dir) # what is 100
+        make_readme(list[i][0], list[i][1], list[i][2], 100, dir) # what is 100
     
 
     return
