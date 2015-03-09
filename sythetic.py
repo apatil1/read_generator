@@ -79,9 +79,10 @@ def load_fasta(filepath, trim_desc=True):
     with open(filepath) as f:
         seqs = parse_fasta(f, trim_desc=trim_desc)
         # you used generators but in the next line convert it to dictionary  - that get rid of generators
-        return dict(seqs)
+        return dict(seqs) # use BioPython SeqIO.index
 
 
+# please remove unused function
 def parse_greengenes_accessions(f):
     for line in f:
         if line.startswith("#"):
@@ -114,15 +115,19 @@ def get_random_sequence(genome):
     chr = random.sample(chr_list.keys(),1)  #select chromosome
     #dont hard-code the values here
     slen = random.randint(300,1000) #select sequence length
+    # the distribution here is uniform 
     spos = random.randint(1,chr_list[chr[0]] - slen)    #select start position
    
     seq = get_fragment(genome, chr[0], slen, spos)
     if seq.count("N") > 0.1 * slen:
+        # you can potentially end up in an infinity loop here please bail after several attmpts
         seq = get_random_sequence(genome)
 
     return seq
    
 def get_fragment(genome, chr, slen, spos): # chr ? 
+    # please protect from overflow
+    # what is chromosome when you are working with bacteria or virus?
     
     #Function to extract sequence from genome using chromosome, length of sequence and start position
     return genome[chr][spos:spos+slen]
@@ -136,7 +141,7 @@ def make_paired_end_reads(sequence):
     R1 = sequence[0:250]  # 250 should not be hard-coded
     R2 = sequence[len(sequence) - 250:len(sequence)]
 
-    if random.randint(0,1):
+    if random.randint(0,1): # you can be more explicit here: random.choice([True, False])
         R1 = make_reverse_complement(R1)
     else:
         R2 = make_reverse_complement(R2)
@@ -159,6 +164,8 @@ def make_reverse_complement(seq):  # BioPyhton has API to write FASTQ
 
 def make_fastq(pair, filename):  # BioPyhton has API to write FASTQ
     #Function to write sequence in FASTQ files for both reads
+
+    # note here code duplication for R1 and R2 please create function
     fname = filename + "-R1.fastq"
     r1 = open(fname,"w")
     r1.write("@" + filename + "\n")
@@ -187,7 +194,7 @@ def make_synthetic_genome(human, phix, bacteria, size, dir):
     #Function to make synthetic genomes from human, phix, bacteria and viruses.
     
     # generate human reads    # this comment is redundant
-    get_human_reads(human, size, dir) 
+    get_human_reads(human, size, dir)  # please rename dir to something else
     
     # generate phix reads
     get_phix_reads(phix, size, dir)
@@ -197,12 +204,14 @@ def make_synthetic_genome(human, phix, bacteria, size, dir):
     
     # generate virus reads
     get_virus_reads(1 - human - phix - bacteria, size, dir)
+    # note that this is actually can be different from what you are writing to the make_readme due to round off errors
 
 
 def get_human_reads(percent, size, dir):
+    # please rename size it to read_count , read_number of something similar
     
     #Function to get random human reads
-    genome = load_fasta("genomes/hg18.fa")
+    genome = load_fasta("genomes/hg18.fa") # we don't need to hard-code data
        
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
@@ -252,9 +261,10 @@ def get_virus_reads(percent, size, dir):
         make_fastq(pair, dir + "phage" + str(i+1))
     
 def make_readme(human, phix, bacteria, size, dir):
+    # size variable is not used in the function
    
     #Function creates readme file listing the composition of fake genome
-    r = open(dir + "Readme.txt","w")
+    r = open(dir + "Readme.txt","w") # please use functions from os.path for working with paths
     r.write("Human :" + str(human))
     r.write("\nPhix174 :" + str(phix))
     r.write("\nBacteria :" + str(bacteria))
@@ -269,11 +279,13 @@ def main(argv):
     human = [0.5, 0.1, 0.01, 0.001]
     phix = [0.01, 0.001]
     bacteria = [0.4, 0.25, 0.1, 0.5]
+    # you need to have a check that total is always 1 or less
     list = permutate_genome_percent(human, phix, bacteria) # please dont use list as aname of variable
 
     main_dir = "//"
     for i in range(0,len(list)):
     
+        # please call it simulated not fake genome :)
         dir = main_dir + "fake_genome" + str(i+1) + "/"
         if not os.path.exists(dir):
             os.makedirs(dir)
