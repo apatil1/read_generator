@@ -18,9 +18,12 @@ def parse_stdin_args():
     #Required command line arguments
     parser.add_argument("-s", help="Number of total reads", required = True, type = int)
     parser.add_argument("-p", help="Path to directory for output files", required = True)
-    parser.add_argument("-hu", help="Human DNA percentage. Default: [0.5, 0.1, 0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.5, 0.1, 0.01, 0.001])
-    parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", required = False, type= int, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
-    parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.01, 0.001])
+    parser.add_argument("-hu", help="Human DNA percentage. Default: [0.5, 0.1, 0.01, 0.001]", 
+        required = False, type= int, nargs = "+", default = [0.5, 0.1, 0.01, 0.001])
+    parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", 
+        required = False, type= int, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
+    parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", 
+        required = False, type= int, nargs = "+", default = [0.01, 0.001])
     
     #Read the command line arguments
     args = parser.parse_args()
@@ -105,6 +108,7 @@ def get_random_sequence(genome):
     chr_list = get_chromosome_length(genome)
     
     random_seq = {}
+    # please dont overwrite reserved python words
     chr = random.sample(chr_list.keys(),1)  #select chromosome
     slen = random.randint(300,1000) #select sequence length
     spos = random.randint(1,chr_list[chr[0]] - slen)    #select start position
@@ -129,9 +133,9 @@ def make_paired_end_reads(sequence):
     Function to make paired end reads by taking 250 bases from start and nd of the
     selected sequence and taking a reverse complement of one of the sequence at random
     '''
-    
-    R1 = sequence[0:250]
-    R2 = sequence[len(sequence) - 250:len(sequence)]
+    read_length = 250 
+    R1 = sequence[0:read_length]
+    R2 = sequence[len(sequence) - read_length:len(sequence)]
 
     if random.randint(0,1):
         R1 = make_reverse_complement(R1)
@@ -264,6 +268,7 @@ def get_phix_reads(percent, size, dir):
     Function to get random phix174 reads
     '''
     
+    # should not be hard-coded
     genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/phix174.fasta")
    
     for i in range(0,int(size * percent)):
@@ -325,19 +330,18 @@ def main(argv):
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
     for i in range(0,len(list)):
-        #for i in range(0,1):
-        dir = args.p +  "/"  + "fake_genome" + str(i+1) + "/"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        genome_dir = args.p +  "/"  + "fake_genome" + str(i+1) + "/"
+        if not os.path.exists(genome_dir):
+            os.makedirs(genome_dir)
         
-        make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir)  #creates FASTQ files from randomly selected sequences from different organisms
-        make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
-        concatenate_fastq(dir)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
+        (human, phiX, bacteria) = list[i]
+        make_synthetic_genome(human, phiX, bacteria, args.s, genome_dir)  #creates FASTQ files from randomly selected sequences from different organisms
+        make_readme(human, phiX, bacteria, genome_dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
+        concatenate_fastq(genome_dir)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
         print "Finished making synthetic genome " + str(i+1)
 
-    return
-
-if __name__ == '__main__': main(sys.argv)
+if __name__ == '__main__': 
+    main(sys.argv)
 
 
  
