@@ -147,7 +147,9 @@ def make_reverse_complement(seq):
     Function to make reverse complement of a sequence
     '''
     
-    comp ={"A":"T","T":"A","G":"C","C":"G","a":"t","t":"a","g":"c","c":"g", "N":"N"}
+    comp ={"A":"T", "T":"A", "G":"C", "C":"G", "a":"t", "t":"a", "g":"c", "c":"g", "N":"N", \
+            "R":"R", "K":"K", "M":"M", "B":"B", "V":"V", "S":"S", "W":"W", "D":"D", "-":"-",\
+            "U":"U", "Y":"Y", "H":"H", " ":""}
 
     rev = ""
     for i in range(0,len(seq)):
@@ -325,10 +327,8 @@ def main(argv):
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
     for i in range(0,len(list)):
-        #for i in range(0,1):
         dir = args.p +  "/"  + "fake_genome" + str(i+1) + "/"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        os.makedirs(dir)
         
         make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir)  #creates FASTQ files from randomly selected sequences from different organisms
         make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
