@@ -24,6 +24,7 @@ def parse_stdin_args():
     
     #Read the command line arguments
     args = parser.parse_args()
+    
     return args
 
 def load_fasta(filepath, trim_desc=True):
@@ -82,10 +83,10 @@ def parse_fasta(f, trim_desc=False):
 
 
 def get_chromosome_length(genome):
-    '''
+    """
     Function to get chromosome list and the size and returns a dictionary
     of chromosome as keys and size as values
-    '''
+    """
     
     chr_list = {}
     
@@ -96,11 +97,11 @@ def get_chromosome_length(genome):
 
 
 def get_random_sequence(genome):
-    '''
+    """
     Function to get random sequences from the genomes by selecting chromosome,
     sequence length and start position at random and returning the extracted 
     random sequence from get_fragment function
-    '''
+    """
     
     chr_list = get_chromosome_length(genome)
     
@@ -116,19 +117,19 @@ def get_random_sequence(genome):
     return seq
    
 def get_fragment(genome, chr, slen, spos):
-    '''
+    """
     Function to extract sequence from genome using chromosome, length of sequence
     and start position
-    '''
+    """
     
     return genome[chr][spos:spos+slen]
 
 
 def make_paired_end_reads(sequence):
-    '''
+    """
     Function to make paired end reads by taking 250 bases from start and nd of the
     selected sequence and taking a reverse complement of one of the sequence at random
-    '''
+    """
     
     R1 = sequence[0:250]
     R2 = sequence[len(sequence) - 250:len(sequence)]
@@ -143,9 +144,9 @@ def make_paired_end_reads(sequence):
 
 
 def make_reverse_complement(seq):
-    '''
+    """
     Function to make reverse complement of a sequence
-    '''
+    """
     
     comp ={"A":"T", "T":"A", "G":"C", "C":"G", "a":"t", "t":"a", "g":"c", "c":"g", "N":"N", \
             "R":"R", "K":"K", "M":"M", "B":"B", "V":"V", "S":"S", "W":"W", "D":"D", "-":"-",\
@@ -159,9 +160,9 @@ def make_reverse_complement(seq):
 
 
 def make_fastq(pair, filename, id):
-    '''
+    """
     Function to write sequence in FASTQ files for both reads
-    '''
+    """
     
     fname = filename + "-R1.fastq"
     r1 = open(fname,"w")
@@ -181,9 +182,9 @@ def make_fastq(pair, filename, id):
 
 
 def concatenate_fastq(path):
-    '''
+    """
     Function to concatenate all the R1 and R2 FASTQ files.
-    '''
+    """
     
     r1 = []
     r2 = []
@@ -222,17 +223,17 @@ def concatenate_fastq(path):
         os.remove(path + i)
 
 def permutate_genome_percent(human, phix, bacteria):
-    '''
+    """
     Function to permutate to get all combinations of the compositions of fake genomes
-    '''
+    """
     
     return list(itertools.product(human, phix, bacteria))
 
 
 def make_synthetic_genome(human, phix, bacteria, size, dir):
-    '''
+    """
     Function to make synthetic genomes from human, phix, bacteria and viruses.
-    '''
+    """
     
     # generate human reads
     get_human_reads(human, size, dir)
@@ -248,9 +249,9 @@ def make_synthetic_genome(human, phix, bacteria, size, dir):
 
 
 def get_human_reads(percent, size, dir):
-    '''
+    """
     Function to get random human reads
-    '''
+    """
     
     genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/hg18.fa")
        
@@ -262,9 +263,9 @@ def get_human_reads(percent, size, dir):
 
     
 def get_phix_reads(percent, size, dir):
-    '''
+    """
     Function to get random phix174 reads
-    '''
+    """
     
     genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/phix174.fasta")
    
@@ -275,9 +276,9 @@ def get_phix_reads(percent, size, dir):
 
 
 def get_bacteria_reads(percent, size, dir):
-    '''
+    """
     Function to get random bacteria reads
-    '''
+    """
     
     bac_select = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"), 1)
     gen = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0]), 1)
@@ -292,9 +293,9 @@ def get_bacteria_reads(percent, size, dir):
     
 
 def get_virus_reads(percent, size, dir):
-    '''
+    """
     Function to get random virus/phage reads
-    '''
+    """
     
     bac_select = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna"), 1)
     gen = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0]), 1)
@@ -308,9 +309,9 @@ def get_virus_reads(percent, size, dir):
         make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
     
 def make_readme(human, phix, bacteria, dir):
-    '''
+    """
     Function creates readme file listing the composition of fake genome
-    '''
+    """
     
     r = open(dir + "Readme.txt","w")
     r.write("Human :" + str(human))
