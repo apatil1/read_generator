@@ -5,6 +5,7 @@ import os
 from cStringIO import StringIO
 import argparse
 import sys
+import shutil
 
 def parse_stdin_args():
     """This function reads the input
@@ -253,10 +254,8 @@ def get_human_reads(percent, size, dir):
     Function to get random human reads
     """
     
-    genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/hg18.fa")
-       
     for i in range(0,int(size * percent)):
-        seq = get_random_sequence(genome)
+        seq = get_random_sequence(human_genome)
        
         pair = make_paired_end_reads(seq)
         make_fastq(pair, dir + "human" + str(i+1), "human" + str(i+1))
@@ -307,7 +306,12 @@ def get_virus_reads(percent, size, dir):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
         make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
-    
+
+def get_filesnames_in_dir(path):
+    file_list = os.listdir(path)
+    if ".DS_Store" in file_list:
+        del b[-file_list[file_list.index(".DS_Store")]]
+
 def make_readme(human, phix, bacteria, dir):
     """
     Function creates readme file listing the composition of fake genome
@@ -327,9 +331,16 @@ def main(argv):
     
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
+    global human_genome
+    human_genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/hg18.fa")
+
     for i in range(0,len(list)):
         dir = args.p +  "/"  + "fake_genome" + str(i+1) + "/"
-        os.makedirs(dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        else:
+            shutil.rmtree(dir)
+            os.makedirs(dir)
         
         make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir)  #creates FASTQ files from randomly selected sequences from different organisms
         make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
