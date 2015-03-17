@@ -22,6 +22,7 @@ def parse_stdin_args():
     parser.add_argument("-hu", help="Human DNA percentage. Default: [0.5, 0.1, 0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.5, 0.1, 0.01, 0.001])
     parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", required = False, type= int, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
     parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.01, 0.001])
+    parser.add_argument("-isfastq", help="Specify output format 1=FASTQ 0=FASTA (Default: 1)", required = False, type= int, default = 1)
     
     #Read the command line arguments
     args = parser.parse_args()
@@ -181,6 +182,25 @@ def make_fastq(pair, filename, id):
     r2.write("E" * len(pair[1]))
     r2.close()
 
+def make_fasta(pair, filename, id):
+    """
+    Function to write sequence in FASTQ files for both reads
+    """
+    
+    fname = filename + "-R1.fastq"
+    r1 = open(fname,"w")
+    r1.write(">" + id + "\n")
+    r1.write(pair[0])
+    r1.write("\n)
+    r1.close()
+    
+    fname = filename + "-R2.fastq"
+    r2 = open(fname,"w")
+    r2.write(">" + id + "\n")
+    r2.write(pair[1])
+    r2.write("\n")
+    r2.close()
+
 
 def concatenate_fastq(path):
     """
@@ -189,7 +209,7 @@ def concatenate_fastq(path):
     
     r1 = []
     r2 = []
-    filenames = os.listdir(path)
+    filenames = get_filesnames_in_dir(path)
     
     for i in filenames:
         if "R1" in i:
@@ -231,25 +251,25 @@ def permutate_genome_percent(human, phix, bacteria):
     return list(itertools.product(human, phix, bacteria))
 
 
-def make_synthetic_genome(human, phix, bacteria, size, dir):
+def make_synthetic_genome(human, phix, bacteria, size, dir, isfastq):
     """
     Function to make synthetic genomes from human, phix, bacteria and viruses.
     """
     
     # generate human reads
-    get_human_reads(human, size, dir)
+    get_human_reads(human, size, dir, isfastq)
     
     # generate phix reads
-    get_phix_reads(phix, size, dir)
+    get_phix_reads(phix, size, dir, isfastq)
     
     # generate bacteria reads
-    get_bacteria_reads(bacteria, size, dir)
+    get_bacteria_reads(bacteria, size, dir, isfastq)
     
     # generate virus reads
-    get_virus_reads(1 - human - phix - bacteria, size, dir)
+    get_virus_reads(1 - human - phix - bacteria, size, dir, isfastq)
 
 
-def get_human_reads(percent, size, dir):
+def get_human_reads(percent, size, dir, isfastq):
     """
     Function to get random human reads
     """
@@ -258,10 +278,12 @@ def get_human_reads(percent, size, dir):
         seq = get_random_sequence(human_genome)
        
         pair = make_paired_end_reads(seq)
-        make_fastq(pair, dir + "human" + str(i+1), "human" + str(i+1))
-
+        if isfastq:
+             make_fastq(pair, dir + "human" + str(i+1), "human" + str(i+1))
+        else:
+             make_fasta(pair, dir + "human" + str(i+1), "human" + str(i+1))
     
-def get_phix_reads(percent, size, dir):
+def get_phix_reads(percent, size, dir, isfastq):
     """
     Function to get random phix174 reads
     """
@@ -271,16 +293,18 @@ def get_phix_reads(percent, size, dir):
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
-        make_fastq(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
+        if isfastq:
+             make_fastq(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
+        else:
+             make_fasta(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
 
-
-def get_bacteria_reads(percent, size, dir):
+def get_bacteria_reads(percent, size, dir, isfastq):
     """
     Function to get random bacteria reads
     """
     
-    bac_select = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"), 1)
-    gen = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0]), 1)
+    bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"), 1)
+    gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0]), 1)
     path = "/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0] + "/" + gen[0]
 
     genome = load_fasta(path)
@@ -288,16 +312,18 @@ def get_bacteria_reads(percent, size, dir):
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
-        make_fastq(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
-    
+        if isfastq:
+             make_fastq(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
+        else:
+             make_fasta(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
 
-def get_virus_reads(percent, size, dir):
+def get_virus_reads(percent, size, dir, isfastq):
     """
     Function to get random virus/phage reads
     """
     
-    bac_select = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna"), 1)
-    gen = random.sample(os.listdir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0]), 1)
+    bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna"), 1)
+    gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0]), 1)
     path = "/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0] + "/" + gen[0]
 
     genome = load_fasta(path)
@@ -305,12 +331,17 @@ def get_virus_reads(percent, size, dir):
     for i in range(0,int(size * round(percent,2))):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
-        make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
+        if isfastq:
+            make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
+        else:
+            make_fasta(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
+
 
 def get_filesnames_in_dir(path):
     file_list = os.listdir(path)
     if ".DS_Store" in file_list:
         del b[-file_list[file_list.index(".DS_Store")]]
+    return file_list
 
 def make_readme(human, phix, bacteria, dir):
     """
@@ -342,7 +373,7 @@ def main(argv):
             shutil.rmtree(dir)
             os.makedirs(dir)
         
-        make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir)  #creates FASTQ files from randomly selected sequences from different organisms
+        make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
         make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
         concatenate_fastq(dir)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
         print "Finished making synthetic genome " + str(i+1)
