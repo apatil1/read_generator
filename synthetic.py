@@ -190,14 +190,14 @@ def make_fasta(pair, filename, id):
     Function to write sequence in FASTQ files for both reads
     """
     
-    fname = filename + "-R1.fastq"
+    fname = filename + "-R1.fasta"
     r1 = open(fname,"w")
     r1.write(">" + id + "\n")
     r1.write(pair[0])
     r1.write("\n")
     r1.close()
     
-    fname = filename + "-R2.fastq"
+    fname = filename + "-R2.fasta"
     r2 = open(fname,"w")
     r2.write(">" + id + "\n")
     r2.write(pair[1])
@@ -205,9 +205,9 @@ def make_fasta(pair, filename, id):
     r2.close()
 
 
-def concatenate_fastq(path):
+def concatenate_fastq(path, isfastq):
     """
-    Function to concatenate all the R1 and R2 FASTQ files.
+    Function to concatenate all the R1 and R2 FASTQ/FASTA files.
     """
     
     r1 = []
@@ -219,9 +219,15 @@ def concatenate_fastq(path):
             r1.append(i)
         elif "R2" in i:
             r2.append(i)
-    
+    if isfastq:
+        nameR1 = "fake_genome-R1.fastq"
+        nameR2 = "fake_genome-R2.fastq"
+    else:
+        nameR1 = "fake_genome-R1.fasta"
+        nameR2 = "fake_genome-R2.fasta"
+
     #concatinate R1
-    with open(path +  "fake_genome-R1.fastq", 'w') as outfile:
+    with open(path +  nameR1, 'w') as outfile:
         for fname in r1:
             with open(path + fname) as infile:
                 outfile.write(infile.read())
@@ -231,7 +237,7 @@ def concatenate_fastq(path):
     outfile.close()
 
     #concatinate R2
-    with open(path +  "fake_genome-R2.fastq", 'w') as outfile:
+    with open(path +  nameR2, 'w') as outfile:
         for fname in r2:
             with open(path + fname) as infile:
                 outfile.write(infile.read())
@@ -378,7 +384,7 @@ def main(argv):
         
         make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
         make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
-        concatenate_fastq(dir)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
+        concatenate_fastq(dir, args.isfastq)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
         print "Finished making synthetic genome " + str(i+1)
 
     return
