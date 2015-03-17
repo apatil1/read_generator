@@ -110,12 +110,15 @@ def get_random_sequence(genome):
     random_seq = {}
     chr = random.sample(chr_list.keys(),1)  #select chromosome
     slen = random.randint(300,1000) #select sequence length
-    spos = random.randint(1,chr_list[chr[0]] - slen)    #select start position
+    if chr_list[chr[0]] - slen > 0:
+        spos = random.randint(1,chr_list[chr[0]] - slen)    #select start position
    
-    seq = get_fragment(genome, chr[0], slen, spos)
-    if seq.count("N") > 0.1 * slen:
+        seq = get_fragment(genome, chr[0], slen, spos)
+        if seq.count("N") > 0.1 * slen:
+            seq = get_random_sequence(genome)
+    else:
         seq = get_random_sequence(genome)
-
+    
     return seq
    
 def get_fragment(genome, chr, slen, spos):
@@ -191,7 +194,7 @@ def make_fasta(pair, filename, id):
     r1 = open(fname,"w")
     r1.write(">" + id + "\n")
     r1.write(pair[0])
-    r1.write("\n)
+    r1.write("\n")
     r1.close()
     
     fname = filename + "-R2.fastq"
@@ -340,7 +343,7 @@ def get_virus_reads(percent, size, dir, isfastq):
 def get_filesnames_in_dir(path):
     file_list = os.listdir(path)
     if ".DS_Store" in file_list:
-        del b[-file_list[file_list.index(".DS_Store")]]
+        del file_list[file_list.index(".DS_Store")]
     return file_list
 
 def make_readme(human, phix, bacteria, dir):
