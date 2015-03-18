@@ -1,0 +1,18 @@
+
+
+#convert fastq.gz to fasta
+seqtk seq -a /media/THING1/Illumina/140530_M00281_0091_000000000-A85YK/Data/Intensities/BaseCalls/4-15-10sQd_S4_L001_R1_001.fastq.gz  > out.fasta
+ 
+
+#blat would run faster if we use binary version of hg18
+
+blat /media/THING1/kyle/1205_PLEASE/hg18.fa /dev/null /dev/null -tileSize=11 -makeOoc=hg18.noRandom.11.ooc repMatch=1024
+ 
+ 
+#run blat
+#R1
+blat -minScore=50 -fastMap  /media/THING1/kyle/1205_PLEASE/hg18.fa Paris1_GTGAAA_L008_R1_001.fastq.gz.fasta tmp1.psl
+
+#R2
+blat -minScore=50 -fastMap  /media/THING1/kyle/1205_PLEASE/hg18.fa Paris1_GTGAAA_L008_R2_001.fastq.gz.fasta tmp2.psl
+
