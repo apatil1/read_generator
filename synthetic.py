@@ -24,8 +24,15 @@ def parse_stdin_args():
     parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.01, 0.001])
     parser.add_argument("-isfastq", help="Specify output format 1=FASTQ 0=FASTA (Default: 1)", required = False, type= int, default = 1)
     
+    
+    
     #Read the command line arguments
     args = parser.parse_args()
+    
+    #check parameters
+    if args.s < 100:
+        print "Number of total reads must be greater than 100."
+        sys.exit(0)
     
     return args
 
@@ -139,10 +146,9 @@ def make_paired_end_reads(sequence):
     R1 = sequence[0:250]
     R2 = sequence[len(sequence) - 250:len(sequence)]
 
-    if random.randint(0,1):
-        R1 = make_reverse_complement(R1)
-    else:
-        R2 = make_reverse_complement(R2)
+
+    #one reads are reverse complement, so make reverse complement of R2
+    R2 = make_reverse_complement(R2)
 
     return [R1, R2]
 
@@ -257,7 +263,15 @@ def permutate_genome_percent(human, phix, bacteria):
     Function to permutate to get all combinations of the compositions of fake genomes
     """
     
-    return list(itertools.product(human, phix, bacteria))
+    per = list(itertools.product(human, phix, bacteria))
+    sum_per = [sum(i) for i in zip(*per)]
+    
+    #check percentage sum < 1
+    if all(i > 1 for i in sum_per):
+        print "Some combinations of human, phix and bacteria greater than 1"
+        sys.exit(0)
+    
+    return per
 
 
 def make_synthetic_genome(human, phix, bacteria, size, dir, isfastq):
@@ -347,6 +361,9 @@ def get_virus_reads(percent, size, dir, isfastq):
 
 
 def get_filesnames_in_dir(path):
+    '''
+    This function gets file names in directory and returns a list of file names after removing .xxx system files    
+    '''
     file_list = os.listdir(path)
     if ".DS_Store" in file_list:
         del file_list[file_list.index(".DS_Store")]
