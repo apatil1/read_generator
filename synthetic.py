@@ -23,17 +23,25 @@ def parse_stdin_args():
     parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", required = False, type= int, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
     parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.01, 0.001])
     parser.add_argument("-isfastq", help="Specify output format 1=FASTQ 0=FASTA (Default: 1)", required = False, type= int, default = 1)
-    
+    parser.add_argument("-n", help="Read length. Default: 250", required = False, type= int, default = 250)
+    parser.add_argument("-err", help="Error rate. Default: 0", required = False, type= int, default = 0)
+
     
     
     #Read the command line arguments
     args = parser.parse_args()
+    
+    
     
     #check parameters
     if args.s < 100:
         print "Number of total reads must be greater than 100."
         sys.exit(0)
     
+    if args.n < 35:
+        print "Read length should be greater than 35"
+        sys.exit(0)
+
     return args
 
 def load_fasta(filepath, trim_desc=True):
@@ -143,8 +151,8 @@ def make_paired_end_reads(sequence):
     selected sequence and taking a reverse complement of one of the sequence at random
     """
     
-    R1 = sequence[0:250]
-    R2 = sequence[len(sequence) - 250:len(sequence)]
+    R1 = sequence[0:n]
+    R2 = sequence[len(sequence) - n:len(sequence)]
 
 
     #one reads are reverse complement, so make reverse complement of R2
@@ -152,7 +160,40 @@ def make_paired_end_reads(sequence):
 
     return [R1, R2]
 
+'''
+def introduce_errors(per_error, pair):
 
+    """
+    This function introduces insertions in the sequence
+    """
+    en = int(round((per_error * n)/100, 2))
+    error_bp = ''.join(random.choice(["a","t","g","c"]) for i in range(0,en))
+    
+    s = random.randint(0,n - en)
+
+    pair[0] = ''.join(pair[0][0:s] + error_bp + pair[0][s + en:n])
+    pair[1] = ''.join(pair[1][0:s] + error_bp + pair[1][s + en:n])
+    
+    
+    return pair
+
+'''
+def introduce_errors(per_error, pair):
+    
+    """
+    This function introduces errors in the sequence
+    """
+    en = int(round((per_error * n)/100, 2))
+    
+    
+    for i in range(0,en):
+        s = random.randint(0,n)
+    
+        pair[0] = ''.join(pair[0][0:s] + random.choice(["a","t","g","c"])  + pair[0][s+1:n])
+        pair[1] = ''.join(pair[1][0:s] + random.choice(["a","t","g","c"])  + pair[1][s+1:n])
+    
+    
+    return pair
 
 def make_reverse_complement(seq):
     """
@@ -301,6 +342,13 @@ def get_human_reads(percent, size, dir, isfastq):
         seq = get_random_sequence(human_genome)
        
         pair = make_paired_end_reads(seq)
+        
+        global errr
+  
+        if errr:
+            pair = introduce_errors(errr, pair)
+            #errr = 0
+        
         if isfastq:
              make_fastq(pair, dir + "human" + str(i+1), "human" + str(i+1))
         else:
@@ -316,6 +364,10 @@ def get_phix_reads(percent, size, dir, isfastq):
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
+        
+        if errr:
+            pair = introduce_errors(errr, pair)
+            #errr = 0
         if isfastq:
              make_fastq(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
         else:
@@ -335,6 +387,10 @@ def get_bacteria_reads(percent, size, dir, isfastq):
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
+        
+        if errr:
+            pair = introduce_errors(errr, pair)
+            #errr = 0
         if isfastq:
              make_fastq(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
         else:
@@ -354,6 +410,9 @@ def get_virus_reads(percent, size, dir, isfastq):
     for i in range(0,int(size * round(percent,2))):
         seq = get_random_sequence(genome)
         pair = make_paired_end_reads(seq)
+        if errr:
+            pair = introduce_errors(errr, pair)
+            #errr = 0
         if isfastq:
             make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
         else:
@@ -361,9 +420,10 @@ def get_virus_reads(percent, size, dir, isfastq):
 
 
 def get_filesnames_in_dir(path):
-    '''
-    This function gets file names in directory and returns a list of file names after removing .xxx system files    
-    '''
+    """
+    This function gets file names in directory and returns a list of file names after removing .xxx system files
+    """
+    
     file_list = os.listdir(path)
     if ".DS_Store" in file_list:
         del file_list[file_list.index(".DS_Store")]
@@ -385,6 +445,11 @@ def make_readme(human, phix, bacteria, dir):
 
 def main(argv):
     args = parse_stdin_args()
+    global n
+    n = args.n
+    global errr
+    errr = args.err
+    
     
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
@@ -398,7 +463,10 @@ def main(argv):
         else:
             shutil.rmtree(dir)
             os.makedirs(dir)
+    
+    
         
+    
         make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
         make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
         concatenate_fastq(dir, args.isfastq)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
