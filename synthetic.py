@@ -19,9 +19,9 @@ def parse_stdin_args():
     #Required command line arguments
     parser.add_argument("-s", help="Number of total reads", required = True, type = int)
     parser.add_argument("-p", help="Path to directory for output files", required = True)
-    parser.add_argument("-hu", help="Human DNA percentage. Default: [0.5, 0.1, 0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.5, 0.1, 0.01, 0.001])
-    parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", required = False, type= int, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
-    parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= int, nargs = "+", default = [0.01, 0.001])
+    parser.add_argument("-hu", help="Human DNA percentage. Default: [0.5, 0.1, 0.01, 0.001]", required = False, type= float, nargs = "+", default = [0.5, 0.1, 0.01, 0.001])
+    parser.add_argument("-b", help="Bacterial DNA percentage. Default: [0.4, 0.25, 0.1, 0.5]", required = False, type= float, nargs = "+", default = [0.4, 0.25, 0.1, 0.5])
+    parser.add_argument("-x", help="Phix174 DNA percentage. Default: [0.01, 0.001]", required = False, type= float, nargs = "+", default = [0.01, 0.001])
     parser.add_argument("-isfastq", help="Specify output format 1=FASTQ 0=FASTA (Default: 1)", required = False, type= int, default = 1)
     parser.add_argument("-n", help="Read length. Default: 250", required = False, type= int, default = 250)
     parser.add_argument("-err", help="Error rate. Default: 0", required = False, type= int, default = 0)
@@ -31,8 +31,7 @@ def parse_stdin_args():
     #Read the command line arguments
     args = parser.parse_args()
     
-    
-    
+       
     #check parameters
     if args.s < 100:
         print "Number of total reads must be greater than 100."
@@ -217,20 +216,19 @@ def make_fastq(pair, filename, id):
     """
     
     fname = filename + "-R1.fastq"
-    r1 = open(fname,"w")
-    r1.write("@" + id + "\n")
-    r1.write(pair[0])
-    r1.write("\n+\n")
-    r1.write("E" * len(pair[0]))
-    r1.close()
+    with open(fname, "w") as r1:
+        r1.write("@" + id + "\n")
+        r1.write(pair[0])
+        r1.write("\n+\n")
+        r1.write("E" * len(pair[0]))
 
     fname = filename + "-R2.fastq"
-    r2 = open(fname,"w")
-    r2.write("@" + id + "\n")
-    r2.write(pair[1])
-    r2.write("\n+\n")
-    r2.write("E" * len(pair[1]))
-    r2.close()
+    with open(fname, "w") as r2:
+        r2.write("@" + id + "\n")
+        r2.write(pair[1])
+        r2.write("\n+\n")
+        r2.write("E" * len(pair[1]))
+    
 
 def make_fasta(pair, filename, id):
     """
@@ -238,21 +236,19 @@ def make_fasta(pair, filename, id):
     """
     
     fname = filename + "-R1.fasta"
-    r1 = open(fname,"w")
-    r1.write(">" + id + "\n")
-    r1.write(pair[0])
-    r1.write("\n")
-    r1.close()
+    with open(fname,"w") as r1:
+        r1.write(">" + id + "\n")
+        r1.write(pair[0])
+        r1.write("\n")
     
     fname = filename + "-R2.fasta"
-    r2 = open(fname,"w")
-    r2.write(">" + id + "\n")
-    r2.write(pair[1])
-    r2.write("\n")
-    r2.close()
+    with open(fname,"w") as r2:
+        r2.write(">" + id + "\n")
+        r2.write(pair[1])
+        r2.write("\n")
 
 
-def concatenate_fastq(path, isfastq):
+def concatenate_fastq(path, isfastq, sample_name):
     """
     Function to concatenate all the R1 and R2 FASTQ/FASTA files.
     """
@@ -262,42 +258,45 @@ def concatenate_fastq(path, isfastq):
     filenames = get_filesnames_in_dir(path)
     
     for i in filenames:
-        if "R1" in i:
+        if "fake_genome" in i:
+            continue
+        elif "R1" in i:
             r1.append(i)
         elif "R2" in i:
             r2.append(i)
     if isfastq:
-        nameR1 = "fake_genome-R1.fastq"
-        nameR2 = "fake_genome-R2.fastq"
+        nameR1 = sample_name + "-R1.fastq"
+        nameR2 = sample_name + "-R2.fastq"
     else:
-        nameR1 = "fake_genome-R1.fasta"
-        nameR2 = "fake_genome-R2.fasta"
+        nameR1 = sample_name + "-R1.fasta"
+        nameR2 = sample_name + "-R2.fasta"
 
     #concatinate R1
     with open(path +  nameR1, 'w') as outfile:
-        for fname in r1:
+        for fname in sorted(r1):
             with open(path + fname) as infile:
                 outfile.write(infile.read())
                 outfile.write("\n")
-
-    infile.close()
-    outfile.close()
 
     #concatinate R2
     with open(path +  nameR2, 'w') as outfile:
-        for fname in r2:
+        for fname in sorted(r2):
             with open(path + fname) as infile:
                 outfile.write(infile.read())
                 outfile.write("\n")
 
-
-    infile.close()
-    outfile.close()
-
-    for i in filenames:
-        if i == "Readme.txt":
-            continue
+    
+    for i in r1 + r2:
         os.remove(path + i)
+
+def write_samples(path, sample_number, isfastq):
+
+    with open(path + "samples.txt", "w") as outfile:
+        for i in range(0, sample_number):
+            if isfastq:
+                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" + str(i+1) + "-R1.fastq" +  "\t" + path + "fake_genome" + str(i+1) + "-R2.fastq"  + "\n")
+            else:
+                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" + str(i+1) + "-R1.fasta" +  "\t" + path + "fake_genome" + str(i+1) + "-R2.fasta"  + "\n")
 
 def permutate_genome_percent(human, phix, bacteria):
     """
@@ -340,7 +339,6 @@ def get_human_reads(percent, size, dir, isfastq):
     
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(human_genome)
-       
         pair = make_paired_end_reads(seq)
         
         global errr
@@ -368,16 +366,17 @@ def get_phix_reads(percent, size, dir, isfastq):
         if errr:
             pair = introduce_errors(errr, pair)
             #errr = 0
+        
         if isfastq:
              make_fastq(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
         else:
              make_fasta(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
-
+    
+    
 def get_bacteria_reads(percent, size, dir, isfastq):
     """
     Function to get random bacteria reads
     """
-    
     bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"), 1)
     gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0]), 1)
     path = "/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0] + "/" + gen[0]
@@ -391,16 +390,16 @@ def get_bacteria_reads(percent, size, dir, isfastq):
         if errr:
             pair = introduce_errors(errr, pair)
             #errr = 0
+            
         if isfastq:
              make_fastq(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
         else:
              make_fasta(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
-
+       
 def get_virus_reads(percent, size, dir, isfastq):
     """
     Function to get random virus/phage reads
     """
-    
     bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna"), 1)
     gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0]), 1)
     path = "/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0] + "/" + gen[0]
@@ -413,11 +412,12 @@ def get_virus_reads(percent, size, dir, isfastq):
         if errr:
             pair = introduce_errors(errr, pair)
             #errr = 0
+        
         if isfastq:
             make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
         else:
             make_fasta(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
-
+        
 
 def get_filesnames_in_dir(path):
     """
@@ -429,27 +429,23 @@ def get_filesnames_in_dir(path):
         del file_list[file_list.index(".DS_Store")]
     return file_list
 
-def make_readme(human, phix, bacteria, dir):
+'''
+def make_readme(human, phix, bacteria, dir, sample_name):
     """
     Function creates readme file listing the composition of fake genome
     """
     
-    r = open(dir + "Readme.txt","w")
-    r.write("Human :" + str(human))
-    r.write("\nPhix174 :" + str(phix))
-    r.write("\nBacteria :" + str(bacteria))
-    r.write("\nVirus/Phage :" + str(round(1 - human - phix - bacteria, 2)))
-    r.close()
+    with open(dir + "Readme.txt", "w") as r:
+        r.write("sample_name\thuman\tphix\tbacteria\tvirus")
+        r.write("\n" + str(human) +"\t" + str(phix) +"\t" + str(bacteria) +"\t" + str(round(1 - human - phix - bacteria, 2)))
 
-
-
-def main(argv):
+'''
+def main():
     args = parse_stdin_args()
     global n
     n = args.n
     global errr
     errr = args.err
-    
     
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
@@ -457,24 +453,15 @@ def main(argv):
     human_genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/hg18.fa")
 
     for i in range(0,len(list)):
-        dir = args.p +  "/"  + "fake_genome" + str(i+1) + "/"
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        else:
-            shutil.rmtree(dir)
-            os.makedirs(dir)
-    
-    
-        
-    
-        make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, dir, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
-        make_readme(list[i][0], list[i][1], list[i][2], dir)    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
-        concatenate_fastq(dir, args.isfastq)  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
+        make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, args.p, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
+        concatenate_fastq(args.p, args.isfastq, "fake_genome" + str(i+1))  #concatenates all FASTQ files to make R1 and R2 FASTQ files and removes other files
+        #make_readme(list[i][0], list[i][1], list[i][2], args.p, "fake_genome" + str(i+1))    #creates readme file denoting percentage of DNA for each organism in Synthetic genome
         print "Finished making synthetic genome " + str(i+1)
 
+    write_samples(args.p, len(list), args.isfastq)
     return
 
-if __name__ == '__main__': main(sys.argv)
+if __name__ == '__main__': main()
 
 
  
