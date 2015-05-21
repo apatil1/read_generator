@@ -7,6 +7,12 @@ import argparse
 import sys
 import shutil
 
+path_human = "/home/ashwini/ash/testing_tools/genomes/hg18.fa"
+path_phix = "/home/ashwini/ash/testing_tools/genomes/phix174.fasta"
+path_bacteria = "/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"
+path_virus = "/home/ashwini/ash/testing_tools/genomes/phage/all.fna"
+
+
 def parse_stdin_args():
     """This function reads the input
     arguments passed through standard in"""
@@ -357,7 +363,7 @@ def get_phix_reads(percent, size, dir, isfastq):
     Function to get random phix174 reads
     """
     
-    genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/phix174.fasta")
+    genome = load_fasta(path_phix)
    
     for i in range(0,int(size * percent)):
         seq = get_random_sequence(genome)
@@ -377,9 +383,9 @@ def get_bacteria_reads(percent, size, dir, isfastq):
     """
     Function to get random bacteria reads
     """
-    bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna"), 1)
-    gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0]), 1)
-    path = "/home/ashwini/ash/testing_tools/genomes/bacteria/all.fna/" + bac_select[0] + "/" + gen[0]
+    bac_select = random.sample(get_filesnames_in_dir(path_bacteria), 1)
+    gen = random.sample(get_filesnames_in_dir(path_bacteria + "/" + bac_select[0]), 1)
+    path = path_bacteria + "/" + bac_select[0] + "/" + gen[0]
 
     genome = load_fasta(path)
    
@@ -400,9 +406,9 @@ def get_virus_reads(percent, size, dir, isfastq):
     """
     Function to get random virus/phage reads
     """
-    bac_select = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna"), 1)
-    gen = random.sample(get_filesnames_in_dir("/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0]), 1)
-    path = "/home/ashwini/ash/testing_tools/genomes/phage/all.fna/" + bac_select[0] + "/" + gen[0]
+    bac_select = random.sample(get_filesnames_in_dir(path_virus), 1)
+    gen = random.sample(get_filesnames_in_dir(path_virus + "/" + bac_select[0]), 1)
+    path = path_virus + "/" + bac_select[0] + "/" + gen[0]
 
     genome = load_fasta(path)
   
@@ -450,7 +456,7 @@ def main():
     list = permutate_genome_percent(args.hu, args.x, args.b)
     
     global human_genome
-    human_genome = load_fasta("/home/ashwini/ash/testing_tools/genomes/hg18.fa")
+    human_genome = load_fasta(path_human)
 
     for i in range(0,len(list)):
         make_synthetic_genome(list[i][0], list[i][1], list[i][2], args.s, args.p, args.isfastq)  #creates FASTQ files from randomly selected sequences from different organisms
