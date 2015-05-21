@@ -31,13 +31,10 @@ def parse_stdin_args():
     parser.add_argument("-isfastq", help="Specify output format 1=FASTQ 0=FASTA (Default: 1)", required = False, type= int, default = 1)
     parser.add_argument("-n", help="Read length. Default: 250", required = False, type= int, default = 250)
     parser.add_argument("-err", help="Error rate. Default: 0", required = False, type= int, default = 0)
-
-    
     
     #Read the command line arguments
     args = parser.parse_args()
-    
-       
+           
     #check parameters
     if args.s < 100:
         print "Number of total reads must be greater than 100."
@@ -158,7 +155,6 @@ def make_paired_end_reads(sequence):
     
     R1 = sequence[0:n]
     R2 = sequence[len(sequence) - n:len(sequence)]
-
 
     #one reads are reverse complement, so make reverse complement of R2
     R2 = make_reverse_complement(R2)
@@ -300,9 +296,13 @@ def write_samples(path, sample_number, isfastq):
     with open(path + "samples.txt", "w") as outfile:
         for i in range(0, sample_number):
             if isfastq:
-                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" + str(i+1) + "-R1.fastq" +  "\t" + path + "fake_genome" + str(i+1) + "-R2.fastq"  + "\n")
+                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" +
+                              str(i+1) + "-R1.fastq" +  "\t" + path + "fake_genome" +
+                              str(i+1) + "-R2.fastq"  + "\n")
             else:
-                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" + str(i+1) + "-R1.fasta" +  "\t" + path + "fake_genome" + str(i+1) + "-R2.fasta"  + "\n")
+                outfile.write("fake_genome" + str(i+1) + "\t" + path + "fake_genome" +
+                              str(i+1) + "-R1.fasta" +  "\t" + path + "fake_genome" +
+                              str(i+1) + "-R2.fasta"  + "\n")
 
 def permutate_genome_percent(human, phix, bacteria):
     """
@@ -351,7 +351,6 @@ def get_human_reads(percent, size, dir, isfastq):
   
         if errr:
             pair = introduce_errors(errr, pair)
-            #errr = 0
         
         if isfastq:
              make_fastq(pair, dir + "human" + str(i+1), "human" + str(i+1))
@@ -371,7 +370,6 @@ def get_phix_reads(percent, size, dir, isfastq):
         
         if errr:
             pair = introduce_errors(errr, pair)
-            #errr = 0
         
         if isfastq:
              make_fastq(pair, dir + "phix" + str(i+1), "phix" + str(i+1))
@@ -395,7 +393,6 @@ def get_bacteria_reads(percent, size, dir, isfastq):
         
         if errr:
             pair = introduce_errors(errr, pair)
-            #errr = 0
             
         if isfastq:
              make_fastq(pair, dir +  "bacteria" + str(i+1), "bacteria" + str(i+1))
@@ -417,7 +414,6 @@ def get_virus_reads(percent, size, dir, isfastq):
         pair = make_paired_end_reads(seq)
         if errr:
             pair = introduce_errors(errr, pair)
-            #errr = 0
         
         if isfastq:
             make_fastq(pair, dir + "phage" + str(i+1), "phage/virus" + str(i+1))
