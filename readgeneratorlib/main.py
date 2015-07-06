@@ -463,7 +463,5 @@ def main():
     write_samples(args.p, len(list), args.isfastq)
     return
 
-if __name__ == '__main__': main()
-
 
  
